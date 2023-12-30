@@ -77,11 +77,11 @@ class RawData:
             self.data, self.labels = pickle.load(handle)
 
 if __name__ == "__main__":
-    # rdc = RawDataConfig(4, 100, 10)
-    rdc = RawDataConfig(path = "example.pickle")
+    rdc = RawDataConfig(4, 100, 10)
+    # rdc = RawDataConfig(path = "example.pickle")
     rd = RawData(rdc)
 
-    visualise_hyperplane(rd, (0,1), "hola01.png", color_classes=False)
+    visualise_hyperplane(rd, (0,1), "hola01.png", color_classes=True)
     visualise_hyperplane(rd, (0,2), "hola02.png")
     visualise_hyperplane(rd, (1,2), "hola12.png")
     visualise_hypercube(rd, (0,1,2), "hola3D.png")

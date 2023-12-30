@@ -32,3 +32,19 @@ def visualise_hypercube(raw_data, vis_dimension, path, color_classes = True):
     plt.title(f"Hypercube of dimensions {vis_dimension[0]} and {vis_dimension[1]} and {vis_dimension[2]}")
     plt.savefig(path)
     plt.cla()
+
+def visualise_2d_graph(graph, path):
+    import igraph as ig
+
+    fig, ax = plt.subplots(figsize=(5,5))
+    ig.plot(
+        graph, 
+        target=ax,
+        layout=graph.vs["X"], # print nodes in a circular layout
+        vertex_size=10,
+        vertex_color="black",
+        vertex_frame_width=0.5,
+        vertex_frame_color="white",
+    )
+    plt.savefig(path)
+    plt.cla()
