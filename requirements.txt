@@ -3,5 +3,7 @@ matplotlib
 igraph
 scikit-learn
 igraph
+metis
+networkx
 partition-igraph
-pycairo
+pygraphviz
