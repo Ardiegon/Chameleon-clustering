@@ -9,8 +9,8 @@ from visualizers import visualise_hypercube, visualise_hyperplane
 def calc_default_vars(sample_dimensions, number_of_classes):
     return [[0.1 for j in range(sample_dimensions) ] for i in range(number_of_classes)]
 
-def calc_random_vars(sample_dimensions, number_of_classes):
-    return [np.random.rand(sample_dimensions) for i in range(number_of_classes)]
+def calc_random_vars(sample_dimensions, number_of_classes, factor):
+    return [np.random.rand(sample_dimensions)*factor for i in range(number_of_classes)]
 
 def calc_default_centers(sample_dimensions, number_of_classes):
     return [int_to_binary_cors(class_id, sample_dimensions) for class_id in range(number_of_classes)]
@@ -22,17 +22,17 @@ def calc_random_centers(sample_dimensions, number_of_classes, factor=5):
 @dataclass
 class RawDataConfig:
     def __init__(self, number_of_classes = None, number_samples = None, 
-                 sample_dimensions = None, path = None, centers = None, 
-                 vars = None, cluster_position_randomness = True) -> None:
-        self.from_file = True if path is not None else False 
+                 sample_dimensions = None, from_file = None, centers = None, 
+                 vars = None, cluster_position_randomness = True, closeness = 2.0, variation = 0.5) -> None:
+        self.from_file = True if from_file is not None else False 
 
-        if centers is None and path is None:
-            centers = calc_default_centers(sample_dimensions, number_of_classes) if not cluster_position_randomness else calc_random_centers(sample_dimensions, number_of_classes)
-        if vars is None and path is None:
-            vars = calc_default_vars(sample_dimensions, number_of_classes) if not cluster_position_randomness else calc_random_vars(sample_dimensions, number_of_classes)
+        if centers is None and from_file is None:
+            centers = calc_default_centers(sample_dimensions, number_of_classes) if not cluster_position_randomness else calc_random_centers(sample_dimensions, number_of_classes, factor=closeness)
+        if vars is None and from_file is None:
+            vars = calc_default_vars(sample_dimensions, number_of_classes) if not cluster_position_randomness else calc_random_vars(sample_dimensions, number_of_classes, factor=variation)
         
         self.info = {
-            "path": path,
+            "path": from_file,
             "centers": centers,
             "vars": vars,
             "number_of_classes": number_of_classes,
@@ -77,12 +77,13 @@ class RawData:
             self.data, self.labels = pickle.load(handle)
 
 if __name__ == "__main__":
-    rdc = RawDataConfig(4, 100, 10)
-    # rdc = RawDataConfig(path = "example.pickle")
+    # rdc = RawDataConfig(4, 5, 2)
+    rdc = RawDataConfig(from_file = "data\\data_01.pickle")
     rd = RawData(rdc)
+    rd.save_data("data\\data_01.pickle")
 
     visualise_hyperplane(rd, (0,1), "hola01.png", color_classes=True)
-    visualise_hyperplane(rd, (0,2), "hola02.png")
-    visualise_hyperplane(rd, (1,2), "hola12.png")
-    visualise_hypercube(rd, (0,1,2), "hola3D.png")
+    # visualise_hyperplane(rd, (0,2), "hola02.png")
+    # visualise_hyperplane(rd, (1,2), "hola12.png")
+    # visualise_hypercube(rd, (0,1,2), "hola3D.png")
     rd.save_data("data.pickle")

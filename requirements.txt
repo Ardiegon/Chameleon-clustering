@@ -3,3 +3,5 @@ matplotlib
 igraph
 scikit-learn
 igraph
+partition-igraph
+pycairo
