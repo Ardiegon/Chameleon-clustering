@@ -34,17 +34,24 @@ def visualise_hypercube(raw_data, vis_dimension, path, color_classes = True):
     plt.cla()
 
 def visualise_2d_graph(graph, path, show_weight = False):
+    """
+    Shows graph. If length of vector describing location 
+    of single vertex is longer than 2, it still shows only 
+    first and second dimension.
+    """
     import igraph as ig
     fig, ax = plt.subplots(figsize=(5,5))
+    n_dims = len(graph.vs["X"][0])
     ig.plot(
         graph, 
         target=ax,
-        layout=graph.vs["X"], # print nodes in a circular layout
+        layout=graph.vs["X"] if n_dims <= 2 else np.array(graph.vs["X"])[:, :2],
         vertex_size=10,
         vertex_color="black",
         vertex_frame_width=0.5,
         vertex_frame_color="white",
-        edge_label = [f'{w:.2f}' for w in graph.es["weight"]] if show_weight else ["" for _ in range(graph.vcount())],
+        vertex_label = [v for v in graph.vs["index"]] if show_weight else ["" for _ in range(graph.vcount())],
+        edge_label = [f'{w:.3f}' for w in graph.es["weight"]] if show_weight else ["" for _ in range(graph.vcount())],
         edge_align_label = True,
         edge_label_size = 6,
     )

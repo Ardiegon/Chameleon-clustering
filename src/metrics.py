@@ -20,5 +20,5 @@ def relative_closeness(c1,c2):
     two clusters are alike in terms of being close enough
     """
 
-def loss_func(c1, c2, alpha):
+def cost_func(c1, c2, alpha):
     return relative_closeness(c1, c2)**alpha * relative_interconectivity
