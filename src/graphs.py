@@ -64,91 +64,57 @@ def weighted_adjlist(graph):
         adjacency_list_with_weights.append(neighbors_with_weights)
     return adjacency_list_with_weights
 
-def _partition_igraph(graph, min_cluster_indices = 3):
-    n_vertices = graph.vcount()
-    n_clusters = int(n_vertices / min_cluster_indices + 0.5)
-    clusters = graph.community_fastgreedy(graph.es["weight"]).as_clustering(n_clusters)
-    graph.vs["cluster_id"] = clusters.membership
-    return len(set(clusters.membership)), graph
-
-def _partition_metis(graph, min_cluster_indices = 3):
+def partition(graph, min_cluster_indices = 3):
     n_vertices = graph.vcount()
     n_clusters = int(n_vertices / min_cluster_indices + 0.5)
     
     adjlist = graph["wadjlist"]
-    _, parts = metis.part_graph(adjlist, n_clusters, contig=1)
+    _, parts = metis.part_graph(adjlist, n_clusters)
     graph.vs["cluster_id"] = parts
-    return len(set(parts)), graph
+    return list(set(parts)), graph
 
-def partition(graph, min_cluster_indices = 3):
-    if METIS_BACKEND:
-        return _partition_metis(graph, min_cluster_indices = min_cluster_indices)
-    else:
-        return _partition_igraph(graph, min_cluster_indices = min_cluster_indices)
+# def partition(graph, min_cluster_indices = 3):
+#     n_vertices = graph.vcount()
+#     k  = int(n_vertices / min_cluster_indices + 0.5)
+#     print(k)
 
-def partition_robust(graph, min_cluster_indices = 3):
-    n_vertices = graph.vcount()
-    k  = int(n_vertices / min_cluster_indices + 0.5)
-    print(k)
+#     clusters = 0
+#     for i, p in enumerate(graph.vs):
+#         graph.vs[p.index]['cluster_id'] = 0
+#     cnts = {}
+#     cnts[0] = n_vertices
 
-    clusters = 0
-    for i, p in enumerate(graph.vs):
-        graph.vs[p.index]['cluster_id'] = 0
-    cnts = {}
-    cnts[0] = n_vertices
+#     while clusters < k - 1:
+#         maxc = -1
+#         maxcnt = 0
+#         for key, val in cnts.items():
+#             if val > maxcnt:
+#                 maxcnt = val
+#                 maxc = key
+#         s_nodes = [n for n in graph.vs if graph.vs[n.index]['cluster_id'] == maxc]
+#         s_graph = graph.subgraph(s_nodes)
+#         map_s_indexes = {v.index: v["index"] for v in s_graph.vs}
+#         s_weighted_adjlist = weighted_adjlist(s_graph)
+#         edgecuts, parts = metis.part_graph(
+#             s_weighted_adjlist, 2, objtype='cut', ufactor=250)
+#         new_part_cnt = 0
+#         for i, p in enumerate(s_graph.vs["index"]):
+#             if parts[i] == 1:
+#                 graph.vs[p]['cluster_id'] = clusters + 1
+#                 new_part_cnt = new_part_cnt + 1
+#         cnts[maxc] = cnts[maxc] - new_part_cnt
+#         cnts[clusters + 1] = new_part_cnt
+#         clusters = clusters + 1
 
-    while clusters < k - 1:
-        maxc = -1
-        maxcnt = 0
-        for key, val in cnts.items():
-            if val > maxcnt:
-                maxcnt = val
-                maxc = key
-        s_nodes = [n for n in graph.vs if graph.vs[n.index]['cluster_id'] == maxc]
-        s_graph = graph.subgraph(s_nodes)
-        map_s_indexes = {v.index: v["index"] for v in s_graph.vs}
-        s_weighted_adjlist = weighted_adjlist(s_graph)
-        edgecuts, parts = metis.part_graph(
-            s_weighted_adjlist, 2, objtype='cut', ufactor=250)
-        new_part_cnt = 0
-        for i, p in enumerate(s_graph.vs["index"]):
-            if parts[i] == 1:
-                graph.vs[p]['cluster_id'] = clusters + 1
-                new_part_cnt = new_part_cnt + 1
-        cnts[maxc] = cnts[maxc] - new_part_cnt
-        cnts[clusters + 1] = new_part_cnt
-        clusters = clusters + 1
-
-    return clusters, graph
-
-
-def _bisect_metis(subgraph):
-    adjlist = subgraph["wadjlist"]
-    _, parts = metis.part_graph(adjlist, 2, objtype='cut', ufactor=250)
-    clusters = np.array(parts)
-    ans = ([],[])
-    for i in range(len(clusters)):
-        ans[clusters[i]].append(subgraph.vs[i]["index"])
-    return ans    
-
-def _bisect_igraph(subgraph):
-    clusters = subgraph.community_fastgreedy(subgraph.es["weight"]).as_clustering(2)
-    clusters = np.array(clusters.membership)
-    ans = ([],[])
-    for i in range(len(clusters)):
-        ans[clusters[i]].append(subgraph.vs[i]["index"])
-    return ans
+#     return clusters, graph
 
 def bisect(subgraph):
-    """
-    Gets subgraph representing cluster as an input.
-    Returns idx of vertices in main graph, which are idndices 
-    bisected in subgraph.
-    """
-    if METIS_BACKEND:
-        return _bisect_metis(subgraph)
-    else:
-        return _bisect_igraph(subgraph)
+    adjlist = subgraph["wadjlist"]
+    _, parts = metis.part_graph(adjlist, 2)
+    ans = ([],[])
+    for i in range(len(parts)):
+        ans[parts[i]].append(subgraph.vs[i]["index"])
+    return ans    
     
 def connection_edges_between(bisection, graph):
     connection_edges = []
@@ -172,26 +138,29 @@ def get_edges_average_weight(edges_list, graph):
 
 if __name__ == "__main__":
     rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
+    # rd = RawData(RawDataConfig(4,20,2, cluster_position_randomness=True))
     X = rd.data
     
-    dist, ind = knn(X, 4)
+    dist, ind = knn(X, 7)
     g = create_graphs(dist, ind)
 
-    n_clusters, g = partition(g,3)
-    print(n_clusters)
-    # sg = get_cluster_subgraph(g,1)
+    cluster_names, g = partition(g,3)
+    print(len(g.vs["cluster_id"]))
+    print(g.vs["cluster_id"])
+    print(get_cluster_vertices_ids(g,cluster_names[0]))
+    sg = get_cluster_subgraph(g,cluster_names[0])
     
-    # bisection = bisect(sg)
-    # print(bisection)
-    # c_edges = connection_edges_between(bisection, g)
-    # print(c_edges)
+    bisection = bisect(sg)
+    print(bisection)
+    c_edges = connection_edges_between(bisection, g)
+    print(c_edges)
 
 # VISUALIZATION
 visualise_hyperplane(rd, [0,1], "here.png")
 visualise_2d_graph(g, "knn_graph.png", show_weight=False)
 visualise_2d_graph(sg, "knn_subgraph.png", show_weight=True)
-visualise_clusters(g, "clusters.png", vis_dimension=[0,1])
-visualise_clusters(sg, "subclusters.png", vis_dimension=[0,1])
+visualise_clusters(g, "clusters.png", vis_dimension=[0,1], cluster_names=cluster_names)
+visualise_clusters(sg, "subclusters.png", vis_dimension=[0,1], cluster_names=[cluster_names[0]])
 
 # OTHER DATA 
 # rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
