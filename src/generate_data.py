@@ -3,8 +3,8 @@ from typing import Any
 import numpy as np
 
 from dataclasses import dataclass
-from utils import int_to_binary_cors
-from visualizers import visualise_hypercube, visualise_hyperplane
+from src.utils import int_to_binary_cors
+from src.visualizers import visualise_hypercube, visualise_hyperplane
 
 def calc_default_vars(sample_dimensions, number_of_classes):
     return [[0.1 for j in range(sample_dimensions) ] for i in range(number_of_classes)]

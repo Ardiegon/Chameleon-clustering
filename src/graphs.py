@@ -1,13 +1,9 @@
-import matplotlib.pyplot as plt
 import igraph as ig
 import numpy as np
-import partition_igraph as pig
-import igraph.drawing.colors as colors
 
-from igraph import plot
 from sklearn.neighbors import NearestNeighbors
-from generate_data import RawData, RawDataConfig
-from visualizers import visualise_2d_graph, visualise_clusters, visualise_hyperplane
+from src.generate_data import RawData, RawDataConfig
+from src.visualizers import visualise_2d_igraph, visualise_clusters, visualise_hyperplane
 
 try:
     import metis
@@ -31,7 +27,9 @@ def knn(X, n_neighbors):
     distances, indices = nbrs.kneighbors(X)
     return distances, indices
 
-def create_graphs(distances, indices):
+def create_graphs(raw_data, n_neighbors):
+    distances, indices = knn(raw_data.data, n_neighbors)
+
     n_vertices = len(indices)
     n_neighbors = len(indices[0]-1)
     
@@ -50,7 +48,7 @@ def create_graphs(distances, indices):
 
     graph = ig.Graph(n_vertices, edges)
     graph.vs["index"] = [i for i in range(n_vertices)]
-    graph.vs["X"] = X
+    graph.vs["X"] = raw_data.data
     graph.es["weight"] = weights
     graph["wadjlist"] = weighted_adjlist(graph)
     return graph
@@ -60,7 +58,7 @@ def weighted_adjlist(graph):
     for vertex in graph.vs:
         neighbors_with_weights = []
         for neighbor in graph.neighbors(vertex):
-            neighbors_with_weights.append((neighbor, int(graph.es[graph.get_eid(vertex.index, neighbor)]['weight']*DISTANCE_RESOLUTION)))
+            neighbors_with_weights.append((neighbor, 20*DISTANCE_RESOLUTION-int(graph.es[graph.get_eid(vertex.index, neighbor)]['weight']*DISTANCE_RESOLUTION)))
         adjacency_list_with_weights.append(neighbors_with_weights)
     return adjacency_list_with_weights
 
@@ -72,41 +70,6 @@ def partition(graph, min_cluster_indices = 3):
     _, parts = metis.part_graph(adjlist, n_clusters)
     graph.vs["cluster_id"] = parts
     return list(set(parts)), graph
-
-# def partition(graph, min_cluster_indices = 3):
-#     n_vertices = graph.vcount()
-#     k  = int(n_vertices / min_cluster_indices + 0.5)
-#     print(k)
-
-#     clusters = 0
-#     for i, p in enumerate(graph.vs):
-#         graph.vs[p.index]['cluster_id'] = 0
-#     cnts = {}
-#     cnts[0] = n_vertices
-
-#     while clusters < k - 1:
-#         maxc = -1
-#         maxcnt = 0
-#         for key, val in cnts.items():
-#             if val > maxcnt:
-#                 maxcnt = val
-#                 maxc = key
-#         s_nodes = [n for n in graph.vs if graph.vs[n.index]['cluster_id'] == maxc]
-#         s_graph = graph.subgraph(s_nodes)
-#         map_s_indexes = {v.index: v["index"] for v in s_graph.vs}
-#         s_weighted_adjlist = weighted_adjlist(s_graph)
-#         edgecuts, parts = metis.part_graph(
-#             s_weighted_adjlist, 2, objtype='cut', ufactor=250)
-#         new_part_cnt = 0
-#         for i, p in enumerate(s_graph.vs["index"]):
-#             if parts[i] == 1:
-#                 graph.vs[p]['cluster_id'] = clusters + 1
-#                 new_part_cnt = new_part_cnt + 1
-#         cnts[maxc] = cnts[maxc] - new_part_cnt
-#         cnts[clusters + 1] = new_part_cnt
-#         clusters = clusters + 1
-
-#     return clusters, graph
 
 def bisect(subgraph):
     adjlist = subgraph["wadjlist"]
@@ -137,30 +100,26 @@ def get_edges_average_weight(edges_list, graph):
 
 
 if __name__ == "__main__":
-    rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
-    # rd = RawData(RawDataConfig(4,20,2, cluster_position_randomness=True))
-    X = rd.data
-    
-    dist, ind = knn(X, 7)
-    g = create_graphs(dist, ind)
+    # rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
+    rd = RawData(RawDataConfig(4,300,5, cluster_position_randomness=True))
+    # rd.save_data("data/data_666.pickle")
 
-    cluster_names, g = partition(g,3)
-    print(len(g.vs["cluster_id"]))
-    print(g.vs["cluster_id"])
-    print(get_cluster_vertices_ids(g,cluster_names[0]))
-    sg = get_cluster_subgraph(g,cluster_names[0])
-    
+    g = create_graphs(rd, 5)
+
+    name_clusters, g = partition(g,7)
+    sg = get_cluster_subgraph(g,0)
+
     bisection = bisect(sg)
     print(bisection)
     c_edges = connection_edges_between(bisection, g)
     print(c_edges)
 
 # VISUALIZATION
-visualise_hyperplane(rd, [0,1], "here.png")
-visualise_2d_graph(g, "knn_graph.png", show_weight=False)
-visualise_2d_graph(sg, "knn_subgraph.png", show_weight=True)
-visualise_clusters(g, "clusters.png", vis_dimension=[0,1], cluster_names=cluster_names)
-visualise_clusters(sg, "subclusters.png", vis_dimension=[0,1], cluster_names=[cluster_names[0]])
+    visualise_hyperplane(rd, [0,1], "here.png")
+    visualise_2d_igraph(g, "knn_graph.png", show_weight=False)
+    visualise_2d_igraph(sg, "knn_subgraph.png", show_weight=True)
+    visualise_clusters(g, "clusters.png", vis_dimension=[0,1], cluster_names=name_clusters)
+    visualise_clusters(sg, "subclusters.png", vis_dimension=[0,1], cluster_names=[name_clusters[0]])
 
 # OTHER DATA 
 # rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
