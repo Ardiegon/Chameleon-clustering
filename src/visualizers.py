@@ -66,14 +66,14 @@ def visualise_2d_networkx(graph, path, show_weight=False, color_clusters=False):
     the first and second dimension.
     """
     pos = nx.get_node_attributes(graph, 'pos')
-    if len(pos.values()[0]) > 2:
+    if len(list(pos.values())[0]) > 2:
         for k, v in pos.items():
             pos[k] = v[:2]
     edge_labels = nx.get_edge_attributes(graph, 'weight')
     for k, v in edge_labels.items():
-        edge_labels[k] = f"{v:.2f}"
+        edge_labels[k] = f"{v:.2f}" if show_weight else ""
 
-    fig, ax = plt.subplots()
+    fig, ax_main = plt.subplots()
 
     if color_clusters:
         node_colors = list(nx.get_node_attributes(graph, "cluster_id").values())
@@ -82,25 +82,30 @@ def visualise_2d_networkx(graph, path, show_weight=False, color_clusters=False):
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])
 
-        nx.draw(graph, pos, with_labels=True, node_size=600, node_color=node_colors, cmap=cmap,
-                font_size=10, font_color="black", font_weight="bold", width=2, ax=ax)
+        nx.draw(graph, pos, with_labels=True, node_size=200, node_color=node_colors, cmap=cmap,
+                font_size=6, font_color="black", font_weight="bold", width=1, ax=ax_main)
 
-        cbar = plt.colorbar(sm, ticks=list(set(node_colors)), ax=ax)
+        # Create colorbar legend
+        cbar = plt.colorbar(sm, ticks=list(set(node_colors)), ax=ax_main)
         cbar.set_label('Cluster ID')
 
-        unique_clusters = sorted(list(set(node_colors)))
-        legend_labels = [f"Cluster {label}" for label in unique_clusters]
-        plt.legend(handles=[plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=cmap(norm(label)),
-                                       markersize=10) for label in unique_clusters],
-                   labels=legend_labels, loc='upper right')
+        # # Create a legend on a new axis
+        # ax_legend = fig.add_axes([0.9, 0.1, 0.02, 0.8])  # Adjust the values for positioning
+        # unique_clusters = sorted(list(set(node_colors)))
+        # legend_labels = [f"Cluster {label}" for label in unique_clusters]
+        # ax_legend.legend(handles=[plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=cmap(norm(label)),
+        #                                     markersize=10) for label in unique_clusters],
+        #                 labels=legend_labels, loc='center left')
 
     else:
-        nx.draw(graph, pos, with_labels=True, node_size=600, font_size=10,
-                font_color="black", font_weight="bold", width=2, ax=ax)
+        nx.draw(graph, pos, with_labels=True, node_size=200, font_size=6,
+                font_color="black", font_weight="bold", width=1, ax=ax_main)
 
     nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_labels, font_size=8)
+
     plt.savefig(path)
     plt.cla()
+
 
 def visualise_clusters(graph, path, vis_dimension, cluster_names, networx = True):
     assert len(vis_dimension)==2

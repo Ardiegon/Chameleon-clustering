@@ -63,6 +63,7 @@ def weighted_adjlist(graph):
     return adjacency_list_with_weights
 
 def partition(graph, min_cluster_indices = 3):
+    print(type(graph))
     n_vertices = graph.vcount()
     n_clusters = int(n_vertices / min_cluster_indices + 0.5)
     

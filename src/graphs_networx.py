@@ -4,8 +4,8 @@ import numpy as np
 
 from sklearn.neighbors import NearestNeighbors
 
-from generate_data import RawData, RawDataConfig
-from visualizers import  visualise_clusters, visualise_hyperplane, visualise_2d_networkx
+from src.generate_data import RawData, RawDataConfig
+from src.visualizers import  visualise_clusters, visualise_hyperplane, visualise_2d_networkx
 
 def knn(X, n_neighbors):
     nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='auto').fit(X)
@@ -39,7 +39,6 @@ def create_graphs(raw_data, n_neighbors):
 
     nx.set_node_attributes(graph, positions, 'pos')
     
-    print(graph)   
     return graph
 
 def partition(graph, min_cluster_indices = 3):
@@ -48,6 +47,8 @@ def partition(graph, min_cluster_indices = 3):
         p_weights = []
         for n in subgraph.nodes:
             for m in graph[n]:
+                if m in subgraph.nodes:
+                    continue
                 weight = graph.get_edge_data(n, m).get('weight')
                 p_edges.append((n, m))
                 p_weights.append(weight)
@@ -59,15 +60,14 @@ def partition(graph, min_cluster_indices = 3):
         return deleted_cluster, closest_cluster
     
     def rename_clusters(graph, c_names):
-        for id, name in enumerate(c_names):
+        for id, name in enumerate(sorted(c_names)):
             if id == name:
                 continue
             for n in graph.nodes:
                 if graph.nodes[n]["cluster_id"] == name:
                     graph.nodes[n]["cluster_id"] = id 
         new_c_names = nx.get_node_attributes(graph, 'cluster_id').values()
-        return list(set(new_c_names))
-
+        return sorted(list(set(new_c_names)))
 
     n_vertices = graph.number_of_nodes()
     n_clusters = int(n_vertices / min_cluster_indices + 0.5)
@@ -78,7 +78,6 @@ def partition(graph, min_cluster_indices = 3):
 
     c_names = list(set(parts))
     next_cluster =  max(c_names) + 1
-
     found_unconnected_cluster = True
     while found_unconnected_cluster:
         found_unconnected_cluster = False
@@ -93,10 +92,9 @@ def partition(graph, min_cluster_indices = 3):
                 if len(partitions[0]) == 0 or len(partitions[1])==0:
                     c_deleted, c_merged = merge_to_closest_connected(subgraph, graph)
                     merged_clusters.append(c_deleted)
-                else:    
+                else:
                     for n in partitions[1]:
                         graph.nodes[n]['cluster_id'] = next_cluster
-
                     c_names_buff.append(next_cluster)
                     next_cluster+=1
         c_names += c_names_buff
@@ -143,9 +141,12 @@ def average_weight_edges(edge_list, graph):
 
 
 if __name__ == "__main__":
-    rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
+    # rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
+    rd = RawData(RawDataConfig(from_file = "data/data_03.pickle"))
+    # rd = RawData(RawDataConfig(4,50,10, cluster_position_randomness=True))
+    visualise_hyperplane(rd, [0,1], "here.png")
 
-    g = create_graphs(rd, 4)
+    g = create_graphs(rd, 10)
     visualise_2d_networkx(g, "nx_graph.png")
 
     c_names, g = partition(g, 10)
