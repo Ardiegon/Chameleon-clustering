@@ -6,7 +6,7 @@ from src.visualizers import *
 
 
 def test_graph_backbone_networx():
-    rd = RawData(RawDataConfig(from_file = "data/data_03.pickle"))
+    rd = RawData(RawDataConfig(from_file = "data/test_00.pickle"))
     g = gnx.create_graphs(rd, 10)
     _, g = gnx.partition(g, 10)
     sg = gnx.get_cluster_subgraph(g, 0)

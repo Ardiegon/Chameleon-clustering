@@ -1,4 +1,4 @@
 *.pickle
 *.png
-data/*.pickle
+!data/test*.pickle
 __pycache__
