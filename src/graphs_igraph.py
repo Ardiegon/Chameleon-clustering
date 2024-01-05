@@ -101,9 +101,7 @@ def get_edges_average_weight(edges_list, graph):
 
 
 if __name__ == "__main__":
-    # rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
-    rd = RawData(RawDataConfig(4,300,5, cluster_position_randomness=True))
-    # rd.save_data("data/data_666.pickle")
+    rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
 
     g = create_graphs(rd, 5)
 
@@ -111,8 +109,8 @@ if __name__ == "__main__":
     sg = get_cluster_subgraph(g,0)
 
     bisection = bisect(sg)
-    print(bisection)
     c_edges = connection_edges_between(bisection, g)
+    print(bisection)
     print(c_edges)
 
 # VISUALIZATION
@@ -122,8 +120,3 @@ if __name__ == "__main__":
     visualise_clusters(g, "clusters.png", vis_dimension=[0,1], cluster_names=name_clusters)
     visualise_clusters(sg, "subclusters.png", vis_dimension=[0,1], cluster_names=[name_clusters[0]])
 
-# OTHER DATA 
-# rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
-# rd = RawData(RawDataConfig(4,100,20, cluster_position_randomness=True))
-# rd = RawData(RawDataConfig(4,5,2, cluster_position_randomness=True))
-# rd.save_data("data/data_03.pickle")

@@ -109,6 +109,11 @@ def bisect(subgraph):
     for i, n in enumerate(subgraph.nodes):
         ans[parts[i]].append(n)
     return ans    
+
+def cluster_bisection_edges(graph, cluster_id):
+    subgraph = get_cluster_subgraph(graph, cluster_id) 
+    partitions = bisect(subgraph=subgraph)
+    return connection_edges_between(partitions, graph)
     
 def connection_edges_between(bisection, graph):
     connection_edges = []
@@ -123,7 +128,15 @@ def get_cluster_subgraph(graph, cluster_id):
     subgraph = graph.subgraph(nodes)
     return subgraph
 
-def average_weight_edges(edge_list, graph):
+def get_two_clusters_subgraph(graph, cid1, cid2):
+    nodes = [n for n in graph.nodes if graph.nodes[n]['cluster_id']==cid1 or graph.nodes[n]['cluster_id']==cid2]
+    subgraph = graph.subgraph(nodes)
+    return subgraph
+
+def get_cluster_nodes(graph, cluster_id):
+    return [n for n in graph.nodes if graph.nodes[n]['cluster_id']==cluster_id]
+
+def sum_weight_edges(edge_list, graph, return_count = False):
     total_weight = 0
     count = 0
 
@@ -133,34 +146,50 @@ def average_weight_edges(edge_list, graph):
             total_weight += graph[node_id_1][node_id_2].get('weight', 0)
             count += 1
 
+    if return_count:
+        return count, total_weight
+    else: 
+        return total_weight
+
+
+def average_weight_edges(edge_list, graph):
+    count, total_weight = sum_weight_edges(edge_list, graph, return_count=True)
+
     if count == 0:
         return 0
 
     average_weight = total_weight / count
     return average_weight
 
-
 if __name__ == "__main__":
     # rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
-    rd = RawData(RawDataConfig(from_file = "data/data_03.pickle"))
+    rd = RawData(RawDataConfig(from_file = "data/test_00.pickle"))
     # rd = RawData(RawDataConfig(4,50,10, cluster_position_randomness=True))
-    visualise_hyperplane(rd, [0,1], "here.png")
 
     g = create_graphs(rd, 10)
-    visualise_2d_networkx(g, "nx_graph.png")
 
     c_names, g = partition(g, 10)
     print(c_names)
-    visualise_2d_networkx(g, "nx_graph_clusters.png", color_clusters=True)
 
     sg = get_cluster_subgraph(g, 0)
-    visualise_2d_networkx(sg, "nx_subgraph.png", color_clusters=False)
 
     partitions = bisect(sg)
     print(partitions)
 
     c_edges = connection_edges_between(partitions, g)
     print(c_edges)
+
+    count, s_edge_weight = sum_weight_edges(c_edges, g)
+    a_edge_weight = average_weight_edges(c_edges,g)
+    print(s_edge_weight)
+    print(a_edge_weight)
+    
+    # VISUALIZATIONS
+    visualise_hyperplane(rd, [0,1], "here.png")
+    visualise_2d_networkx(g, "nx_graph.png")
+    visualise_2d_networkx(g, "nx_graph_clusters.png", color_clusters=True)
+    visualise_2d_networkx(sg, "nx_subgraph.png", color_clusters=False)
+
 
 
 
