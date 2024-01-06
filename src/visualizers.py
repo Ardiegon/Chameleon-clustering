@@ -2,9 +2,11 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import os
+import imageio
 
-def visualise_hyperplane(raw_data, vis_dimension, path, color_classes = True):
-    X, y = raw_data.data, raw_data.labels
+def visualise_hyperplane(raw_data, vis_dimension, path, color_classes = True, other_labels = []):
+    X, y = (raw_data.data, raw_data.labels) if not other_labels else (raw_data.data, np.array(other_labels))  
     assert len(vis_dimension)==2
     assert all(vd < len(X[0]) for vd in vis_dimension)
 
@@ -16,6 +18,7 @@ def visualise_hyperplane(raw_data, vis_dimension, path, color_classes = True):
     plt.title(f"Hyperplane of dimensions {vis_dimension[0]} and {vis_dimension[1]}")
     plt.savefig(path)
     plt.cla()
+    plt.close()
 
 def visualise_hypercube(raw_data, vis_dimension, path, color_classes = True):
     X, y = raw_data.data, raw_data.labels
@@ -33,6 +36,7 @@ def visualise_hypercube(raw_data, vis_dimension, path, color_classes = True):
     plt.title(f"Hypercube of dimensions {vis_dimension[0]} and {vis_dimension[1]} and {vis_dimension[2]}")
     plt.savefig(path)
     plt.cla()
+    plt.close()
 
 def visualise_2d_igraph(graph, path, show_weight = False):
     """
@@ -58,8 +62,9 @@ def visualise_2d_igraph(graph, path, show_weight = False):
     )
     plt.savefig(path)
     plt.cla()
+    plt.close()
 
-def visualise_2d_networkx(graph, path, show_weight=False, color_clusters=False):
+def visualise_2d_networkx(graph, path, show_weight=False, color_clusters=False, show_node_ids=True):
     """
     Shows graph. If the length of the vector describing the location 
     of a single vertex is longer than 2, it still shows only 
@@ -82,29 +87,22 @@ def visualise_2d_networkx(graph, path, show_weight=False, color_clusters=False):
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])
 
-        nx.draw(graph, pos, with_labels=True, node_size=200, node_color=node_colors, cmap=cmap,
+        nx.draw(graph, pos, with_labels=show_node_ids, node_size=200, node_color=node_colors, cmap=cmap,
                 font_size=6, font_color="black", font_weight="bold", width=1, ax=ax_main)
 
-        # Create colorbar legend
         cbar = plt.colorbar(sm, ticks=list(set(node_colors)), ax=ax_main)
         cbar.set_label('Cluster ID')
 
-        # # Create a legend on a new axis
-        # ax_legend = fig.add_axes([0.9, 0.1, 0.02, 0.8])  # Adjust the values for positioning
-        # unique_clusters = sorted(list(set(node_colors)))
-        # legend_labels = [f"Cluster {label}" for label in unique_clusters]
-        # ax_legend.legend(handles=[plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=cmap(norm(label)),
-        #                                     markersize=10) for label in unique_clusters],
-        #                 labels=legend_labels, loc='center left')
 
     else:
-        nx.draw(graph, pos, with_labels=True, node_size=200, font_size=6,
+        nx.draw(graph, pos, with_labels=show_node_ids, node_size=200, font_size=6,
                 font_color="black", font_weight="bold", width=1, ax=ax_main)
 
     nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_labels, font_size=8)
 
     plt.savefig(path)
     plt.cla()
+    plt.close()
 
 
 def visualise_clusters(graph, path, vis_dimension, cluster_names, networx = True):
@@ -122,3 +120,13 @@ def visualise_clusters(graph, path, vis_dimension, cluster_names, networx = True
     plt.title(f"Clusters - visualised dimensions {vis_dimension[0]} and {vis_dimension[1]}")
     plt.savefig(path)
     plt.cla()
+    plt.close()
+
+def create_gif(images_folder, output_gif_path, duration=10):
+    images = []
+    png_files = [f for f in os.listdir(images_folder) if f.endswith('.png')]
+    png_files.sort()
+    for png_file in png_files:
+        image_path = os.path.join(images_folder, png_file)
+        images.append(imageio.imread(image_path))
+    imageio.mimsave(output_gif_path, images, duration=duration)

@@ -133,6 +133,14 @@ def get_two_clusters_subgraph(graph, cid1, cid2):
     subgraph = graph.subgraph(nodes)
     return subgraph
 
+def check_if_connected(graph, cid1, cid2):
+    c1_nodes = get_cluster_nodes(graph, cid1)
+    c2_nodes = get_cluster_nodes(graph, cid2)
+    edges = connection_edges_between((c1_nodes, c2_nodes), graph)
+    if len(edges)==0:
+        return False
+    return True
+
 def get_cluster_nodes(graph, cluster_id):
     return [n for n in graph.nodes if graph.nodes[n]['cluster_id']==cluster_id]
 
@@ -162,8 +170,8 @@ def average_weight_edges(edge_list, graph):
     return average_weight
 
 if __name__ == "__main__":
-    # rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
-    rd = RawData(RawDataConfig(from_file = "data/test_00.pickle"))
+    rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
+    # rd = RawData(RawDataConfig(from_file = "data/test_00.pickle"))
     # rd = RawData(RawDataConfig(4,50,10, cluster_position_randomness=True))
 
     g = create_graphs(rd, 10)
@@ -179,7 +187,7 @@ if __name__ == "__main__":
     c_edges = connection_edges_between(partitions, g)
     print(c_edges)
 
-    count, s_edge_weight = sum_weight_edges(c_edges, g)
+    s_edge_weight = sum_weight_edges(c_edges, g)
     a_edge_weight = average_weight_edges(c_edges,g)
     print(s_edge_weight)
     print(a_edge_weight)

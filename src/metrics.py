@@ -2,7 +2,7 @@ import numpy as np
 
 import src.graphs_networx as gnx
 from src.generate_data import RawData, RawDataConfig
-from visualizers import visualise_2d_networkx
+from src.visualizers import visualise_2d_networkx
 
 
 def internal_interconnectivity(graph, cid):
