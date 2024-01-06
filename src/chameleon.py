@@ -29,16 +29,19 @@ def merge(graph, cluster_names, target_cluster_number, alpha):
     return [], False
 
 
-def chameleon(raw_data, target_cluster_number, nearest_neighbors=10, minimum_cluster_nodes=7, alpha=2.0, plot = False):
+def chameleon(raw_data, target_cluster_number, nearest_neighbors=10, minimum_cluster_nodes=7, alpha=0.5, plot = False):
     graph = gnx.create_graphs(raw_data, nearest_neighbors)
     c_names, graph = gnx.partition(graph, minimum_cluster_nodes)
     iters = len(c_names) - target_cluster_number
+    
+    if plot:    
+        visualise_2d_networkx(graph, f"plots/chameleon_iter0.png", show_weight=False, color_clusters=True)
     
     for i in tqdm(range(iters), total=iters):
         deleted_names, status = merge(graph, c_names, target_cluster_number, alpha)
         c_names = [cn for cn in c_names if cn not in deleted_names]
         if plot:
-            visualise_2d_networkx(graph, f"plots/chameleon_iter{i}.png", show_weight=False, color_clusters=True)
+            visualise_2d_networkx(graph, f"plots/chameleon_iter{i+1}.png", show_weight=False, color_clusters=True)
         if not status:
             break
 
