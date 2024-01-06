@@ -9,7 +9,7 @@ DEF_CLUSTER_PARTITIONS = 10
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--plot", "-p", action="store_true")
+    parser.add_argument("--plot", "-p", default=0, type=int, choices=[0,1,2], help="which things should be plotted")
     parser.add_argument("--target-clusters-amount", "-t", type=int, required=True) 
     parser.add_argument("--min-size", "-m", default = 10, type=int,
                         help="Minimum wanted amount of data points in cluster.")
@@ -30,7 +30,7 @@ def main(args):
     if args.plot:
         delete_png_files("plots")
     # rd = RawData(RawDataConfig(from_file="data/data_01.pickle"))
-    rd = RawData(RawDataConfig(4,400,3))
+    rd = RawData(RawDataConfig(4,200,5))
     # rd = RawData(RawDataConfig(2,100,3))
     
     min_size = args.min_size
@@ -41,7 +41,7 @@ def main(args):
         n_clusters = len(set(rd.labels))
         min_size = n_data/n_clusters/DEF_CLUSTER_PARTITIONS
 
-    answers = chameleon(rd,target,n_neighbors,min_size,plot=args.plot)
+    answers = chameleon(rd,target,n_neighbors,min_size,plot=args.plot>=2)
     
     if args.plot:
         visualise_hyperplane(rd, [0,1], "plots/intro.png")
