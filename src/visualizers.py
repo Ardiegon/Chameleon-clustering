@@ -5,8 +5,13 @@ import matplotlib.cm as cm
 import os
 import imageio
 
+import src.generate_data as gd
+
 def visualise_hyperplane(raw_data, vis_dimension, path, color_classes = True, other_labels = []):
-    X, y = (raw_data.data, raw_data.labels) if not other_labels else (raw_data.data, np.array(other_labels))  
+    if isinstance(raw_data, gd.RawData):
+        X, y = (raw_data.data, raw_data.labels)
+    else:
+        X, y = np.array(raw_data[0]), np.array(raw_data[1])  
     assert len(vis_dimension)==2
     assert all(vd < len(X[0]) for vd in vis_dimension)
 
@@ -87,7 +92,7 @@ def visualise_2d_networkx(graph, path, show_weight=False, color_clusters=False, 
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])
 
-        nx.draw(graph, pos, with_labels=show_node_ids, node_size=200, node_color=node_colors, cmap=cmap,
+        nx.draw(graph, pos, with_labels=show_node_ids, node_size=30, node_color=node_colors, cmap=cmap,
                 font_size=6, font_color="black", font_weight="bold", width=1, ax=ax_main)
 
         cbar = plt.colorbar(sm, ticks=list(set(node_colors)), ax=ax_main)
@@ -95,7 +100,7 @@ def visualise_2d_networkx(graph, path, show_weight=False, color_clusters=False, 
 
 
     else:
-        nx.draw(graph, pos, with_labels=show_node_ids, node_size=200, font_size=6,
+        nx.draw(graph, pos, with_labels=show_node_ids, node_size=30, font_size=6,
                 font_color="black", font_weight="bold", width=1, ax=ax_main)
 
     nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_labels, font_size=8)
@@ -122,11 +127,17 @@ def visualise_clusters(graph, path, vis_dimension, cluster_names, networx = True
     plt.cla()
     plt.close()
 
-def create_gif(images_folder, output_gif_path, duration=10):
+def create_gif(images_folder, output_gif_path, duration=0.1 ):
+    ms_duration = duration *1000
+    last_frame_duration=5
     images = []
     png_files = [f for f in os.listdir(images_folder) if f.endswith('.png')]
     png_files.sort()
     for png_file in png_files:
         image_path = os.path.join(images_folder, png_file)
         images.append(imageio.imread(image_path))
-    imageio.mimsave(output_gif_path, images, duration=duration)
+    if images:
+        last_frame = images[-1]
+        for _ in range(int(last_frame_duration/duration)):
+            images.append(last_frame)
+    imageio.mimsave(output_gif_path, images, format='GIF', duration=ms_duration)

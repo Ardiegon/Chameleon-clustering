@@ -30,26 +30,31 @@ def merge(graph, cluster_names, target_cluster_number, alpha):
 
 
 def chameleon(raw_data, target_cluster_number, nearest_neighbors=10, minimum_cluster_nodes=7, alpha=0.5, plot = False):
+    print("Building graph...")
     graph = gnx.create_graphs(raw_data, nearest_neighbors)
     c_names, graph = gnx.partition(graph, minimum_cluster_nodes)
     iters = len(c_names) - target_cluster_number
     
     if plot:    
-        visualise_2d_networkx(graph, f"plots/chameleon_iter0.png", show_weight=False, color_clusters=True)
+        visualise_2d_networkx(graph, f"plots/chameleon_iter000.png", show_weight=False, color_clusters=True, show_node_ids=False)
     
+    print("Clustering...")
     for i in tqdm(range(iters), total=iters):
         deleted_names, status = merge(graph, c_names, target_cluster_number, alpha)
         c_names = [cn for cn in c_names if cn not in deleted_names]
         if plot:
-            visualise_2d_networkx(graph, f"plots/chameleon_iter{i+1}.png", show_weight=False, color_clusters=True)
+            idx = str(i+1).zfill(3)
+            visualise_2d_networkx(graph, f"plots/chameleon_iter{idx}.png", show_weight=False, color_clusters=True, show_node_ids=False)
         if not status:
             break
 
     if plot:
-        create_gif("plots", "plots/animation.gif", duration=0.5)
+        create_gif("plots", "plots/animation.gif")
     labels = []
+    positions = []
     for n in graph.nodes():
+        positions.append(graph.nodes[n]["pos"])
         labels.append(graph.nodes[n]["cluster_id"])
     mapping = {v: k for k, v in enumerate(list(set(labels)))}
-    return [mapping[v] for v in labels], len(c_names)
+    return positions, [mapping[v] for v in labels]
 
