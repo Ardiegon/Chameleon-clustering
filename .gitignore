@@ -1,4 +1,5 @@
 *.pickle
 *.png
 !data/test*.pickle
+plots-*
 __pycache__

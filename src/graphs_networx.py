@@ -8,6 +8,7 @@ from src.generate_data import RawData, RawDataConfig
 from src.visualizers import  visualise_clusters, visualise_hyperplane, visualise_2d_networkx
 
 DISTANCE_RESOLUTION = 10000
+EPSILON = 1e3
 
 def knn(X, n_neighbors):
     nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='auto').fit(X)
@@ -34,6 +35,7 @@ def create_graphs(raw_data, n_neighbors):
             distance = distances[edge[0]][list(indices[edge[0]]).index(edge[1])]
         except:
             distance = distances[edge[1]][list(indices[edge[1]]).index(edge[0])]
+        distance+=EPSILON
         weights.append(1/distance)
         similarities.append(int((1/distance)*DISTANCE_RESOLUTION))
     graph = nx.Graph()

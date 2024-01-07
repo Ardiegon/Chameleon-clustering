@@ -20,7 +20,7 @@ def relative_interconnectivity(graph, cid1, cid2):
     partitions = (gnx.get_cluster_nodes(graph, cid1), gnx.get_cluster_nodes(graph, cid2))
     edges = gnx.connection_edges_between(partitions, graph)
     ri_all = gnx.sum_weight_edges(edges, graph)
-    ri_1 = internal_interconnectivity(graph, cid1), 
+    ri_1 = internal_interconnectivity(graph, cid1)
     ri_2 = internal_interconnectivity(graph, cid2)
     return ri_all / ((ri_1 + ri_2) / 2.0)
 

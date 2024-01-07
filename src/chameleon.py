@@ -72,7 +72,7 @@ def merge(graph, cluster_names, target_cluster_number, alpha):
     return [], False
 
 
-def chameleon(raw_data, target_cluster_number, nearest_neighbors=10, minimum_cluster_nodes=7, alpha=0.5, plot = False, parallelism=True):
+def chameleon(raw_data, target_cluster_number, nearest_neighbors=10, minimum_cluster_nodes=7, alpha=2.0, plot = False, parallelism=True):
     print("Building graph...")
     graph = gnx.create_graphs(raw_data, nearest_neighbors)
     c_names, graph = gnx.partition(graph, minimum_cluster_nodes)
@@ -99,5 +99,5 @@ def chameleon(raw_data, target_cluster_number, nearest_neighbors=10, minimum_clu
         positions.append(graph.nodes[n]["pos"])
         labels.append(graph.nodes[n]["cluster_id"])
     mapping = {v: k for k, v in enumerate(list(set(labels)))}
-    return positions, [mapping[v] for v in labels]
+    return [np.array(positions), np.array([mapping[v] for v in labels])]
 

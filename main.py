@@ -1,20 +1,25 @@
 import os
 import argparse
 
-from src.generate_data import RawData, RawDataConfig
+from src.generate_data import RawData, RawDataConfig, UcimlDatatypes
 from src.chameleon import chameleon
 from src.visualizers import visualise_hyperplane
+from src.utils import align_prediction_keys, sort_predictions
 
-DEF_CLUSTER_PARTITIONS = 10
+DEF_CLUSTER_PARTITIONS = 20
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--plot", "-p", default=0, type=int, choices=[0,1,2], help="which things should be plotted")
     parser.add_argument("--target-clusters-amount", "-t", type=int, required=True) 
+    parser.add_argument("--alpha", "-a", type=float, default=2.5) 
     parser.add_argument("--min-size", "-m", default = 10, type=int,
                         help="Minimum wanted amount of data points in cluster.")
-    parser.add_argument("--k_nearest_neighbors", "-k", default=10, type=int)
-    parser.add_argument("--automatic-min-size", "-a", action="store_true")
+    parser.add_argument("--k-nearest-neighbors", "-k", default=10, type=int)
+    parser.add_argument("--automatic-min-size", "-A", action="store_true")
+    parser.add_argument("--calculate-metrics", "-M", action="store_true")
+    parser.add_argument("--fit-prediction-keys", "-F", action="store_true", help="Chameleon returns clusters ids in random order, search for mapping between and fit best.")
+
 
     return parser.parse_args()
 
@@ -30,19 +35,27 @@ def main(args):
     if args.plot:
         delete_png_files("plots")
     # rd = RawData(RawDataConfig(from_file="data/data_01.pickle"))
-    rd = RawData(RawDataConfig(4,200,5))
-    # rd = RawData(RawDataConfig(2,100,3))
+    # rd = RawData(RawDataConfig(from_file="data/smiley.txt"))
+    # rd = RawData(RawDataConfig(from_uci=UcimlDatatypes.WINE))
+    # rd = RawData(RawDataConfig(4,200,5))
+    rd = RawData(RawDataConfig(4,20,5))
     
     min_size = args.min_size
     target = args.target_clusters_amount
     n_neighbors = args.k_nearest_neighbors
     if args.automatic_min_size:
         n_data = len(rd.data)
-        n_clusters = len(set(rd.labels))
-        min_size = n_data/n_clusters/DEF_CLUSTER_PARTITIONS
+        min_size = n_data/target/DEF_CLUSTER_PARTITIONS
 
-    answers = chameleon(rd,target,n_neighbors,min_size,plot=args.plot>=2)
+    should_be_parallel = args.plot<2
+    answers = chameleon(rd, target,n_neighbors,min_size, alpha=args.alpha, plot=args.plot>=2, parallelism=should_be_parallel)
     
+    if args.calculate_metrics:
+        answers = sort_predictions(rd.data, answers)
+
+    elif args.fit_prediction_keys or args.calculate_metrics:
+        answers[1] = align_prediction_keys(rd.labels, answers[1])
+
     if args.plot:
         visualise_hyperplane(rd, [0,1], "plots/intro.png")
         visualise_hyperplane(answers, [0,1], "plots/outro.png")

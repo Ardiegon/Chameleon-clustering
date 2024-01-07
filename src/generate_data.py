@@ -1,3 +1,4 @@
+import os
 import pickle
 import numpy as np
 from typing import Any
@@ -25,7 +26,7 @@ def calc_random_centers(sample_dimensions, number_of_classes, factor=5):
 class UcimlDatatypes(Enum):
     IRIS=53
     WINE=109
-    OBESITY=544
+    HEARTH=571
 
 @dataclass
 class RawDataConfig:
@@ -85,8 +86,25 @@ class RawData:
             pickle.dump((self.data, self.labels), handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     def load_data(self, path, **kwargs):
-        with open(path, 'rb') as handle:
-            self.data, self.labels = pickle.load(handle)
+        _, file_extension = os.path.splitext(path)
+        if file_extension==".pickle":
+            with open(path, 'rb') as handle:
+                self.data, self.labels = pickle.load(handle)
+        elif file_extension==".txt":
+            X = []
+            y = [] 
+            with open(path, 'r') as handle:
+                for line in handle:
+                    values = line.strip().split()
+                    coordinates = list(map(float, values[:-1]))
+                    class_label = int(values[-1])
+                    X.append(coordinates)
+                    y.append(class_label)
+            mappings = {v:k for k,v in enumerate(np.unique(y))}
+            self.labels = np.array([mappings[l] for l in y])
+            self.data = np.array(X)
+        else:
+            raise(ValueError(f"Unknown data file type: {file_extension}"))
 
     def load_uci(self, uci, **kwargs):
         repo = fetch_ucirepo(id=uci.value) 
@@ -98,29 +116,28 @@ class RawData:
         self.labels = np.array([mappings[l[0]] for l in labels])
 
     def clean_dataset(self, df):
-        # Identify string columns for one-hot encoding
         string_columns = df.select_dtypes(include=['object']).columns
-
-        # Apply one-hot encoding to string columns
         df = pd.get_dummies(df, columns=string_columns)
-
-        # Convert all columns to float
         df = df.astype(float)
-
-        # Convert the entire DataFrame to a NumPy array of float values
         data_array = df.values
-
         return data_array
 
 if __name__ == "__main__":
     # rdc = RawDataConfig(3, 10, 4)
     # rdc = RawDataConfig(from_file = "data\\data_01.pickle")
-    rdc = RawDataConfig(from_uci = UcimlDatatypes.IRIS)
+    rdc = RawDataConfig(from_file = "data/smiley.txt")
+    # rdc = RawDataConfig(from_uci = UcimlDatatypes.HEARTH)
+    
     rd = RawData(rdc)
-    # rd.save_data("data\\obesity.pickle")
+    
+    print("Number of data dimensions: ", end="")
+    print(len(rd.data[0]))
+    print("Number of classes: ", end="")
+    print(len(np.unique(rd.labels)))
+    print("Names of classes: ", end="")
+    print(np.unique(rd.labels))
 
     vsl.visualise_hyperplane(rd, (0,1), "hola01.png", color_classes=True)
-    vsl.visualise_hyperplane(rd, (0,2), "hola02.png")
-    vsl.visualise_hyperplane(rd, (1,2), "hola12.png")
-    # vsl.visualise_hypercube(rd, (0,1,2), "hola3D.png")
+    # vsl.visualise_hyperplane(rd, (0,2), "hola02.png")
+    # vsl.visualise_hyperplane(rd, (1,2), "hola12.png")
     rd.save_data("data.pickle")
