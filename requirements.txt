@@ -9,3 +9,4 @@ partition-igraph
 pygraphviz
 ucimlrepo
 pandas
+seaborn

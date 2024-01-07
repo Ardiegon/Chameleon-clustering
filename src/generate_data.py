@@ -101,7 +101,7 @@ class RawData:
                     X.append(coordinates)
                     y.append(class_label)
             mappings = {v:k for k,v in enumerate(np.unique(y))}
-            self.labels = np.array([mappings[l] for l in y])
+            self.labels = np.array([int(mappings[l]) for l in y])
             self.data = np.array(X)
         else:
             raise(ValueError(f"Unknown data file type: {file_extension}"))
@@ -125,7 +125,7 @@ class RawData:
 if __name__ == "__main__":
     # rdc = RawDataConfig(3, 10, 4)
     # rdc = RawDataConfig(from_file = "data\\data_01.pickle")
-    rdc = RawDataConfig(from_file = "data/smiley.txt")
+    rdc = RawDataConfig(from_file = "data/seeds.txt")
     # rdc = RawDataConfig(from_uci = UcimlDatatypes.HEARTH)
     
     rd = RawData(rdc)
