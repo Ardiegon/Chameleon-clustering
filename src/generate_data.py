@@ -26,7 +26,6 @@ def calc_random_centers(sample_dimensions, number_of_classes, factor=5):
 class UcimlDatatypes(Enum):
     IRIS=53
     WINE=109
-    HEARTH=571
 
 @dataclass
 class RawDataConfig:

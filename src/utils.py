@@ -18,17 +18,14 @@ def int_to_binary_cors(integer, max_dimensions):
 
 def align_prediction_keys(original_labels, predicted_labels):
     remaining_pred = list(set(predicted_labels))
-    # print(original_labels)
 
     n_org_labels = {}
     for i in sorted(np.unique(original_labels)):
         key = len(np.where(original_labels==i)[0])
         n_org_labels[i]= key
 
-    print(n_org_labels)
 
     queue_dict = dict(sorted(n_org_labels.items(), key=lambda item: item[1], reverse=True))
-    print(queue_dict)
 
     mapping = {}
     for label in queue_dict.keys():
@@ -37,8 +34,6 @@ def align_prediction_keys(original_labels, predicted_labels):
         max_key = max(score, key=lambda k: score[k])
         mapping[max_key] = label
         remaining_pred = [r for r in remaining_pred if r != max_key]
-    print(mapping)
-    # print(predicted_labels)
     predicted_labels = np.array([mapping[p] for p in predicted_labels])
     return predicted_labels
 
@@ -48,7 +43,10 @@ def sort_predictions(original_X, predicted):
     for org in original_X:
         for i, pred in enumerate(pred_X):
             if all(x == y for x, y in zip(org, pred)):
-                sorted_ids.append(i)
+                if i not in sorted_ids:
+                    sorted_ids.append(i)
+                else:
+                    continue
     sorted_new_X = [pred_X[i] for i in sorted_ids]
     sorted_new_y = [pred_y[i] for i in sorted_ids]
 
