@@ -1,11 +1,15 @@
 import pickle
-from typing import Any
 import numpy as np
+from typing import Any
+from enum import Enum
+import pandas as pd
 
+import src.visualizers as vsl
 from dataclasses import dataclass
 from src.utils import int_to_binary_cors
-from src.visualizers import visualise_hypercube, visualise_hyperplane
-
+from ucimlrepo import fetch_ucirepo 
+  
+  
 def calc_default_vars(sample_dimensions, number_of_classes):
     return [[0.1 for j in range(sample_dimensions) ] for i in range(number_of_classes)]
 
@@ -18,21 +22,27 @@ def calc_default_centers(sample_dimensions, number_of_classes):
 def calc_random_centers(sample_dimensions, number_of_classes, factor=5):
     return [np.random.rand(sample_dimensions)*factor for _ in range(number_of_classes)]
 
+class UcimlDatatypes(Enum):
+    IRIS=53
+    WINE=109
+    OBESITY=544
 
 @dataclass
 class RawDataConfig:
     def __init__(self, number_of_classes = None, number_samples = None, 
-                 sample_dimensions = None, from_file = None, centers = None, 
+                 sample_dimensions = None, from_file = None, from_uci = None, centers = None, 
                  vars = None, cluster_position_randomness = True, closeness = 2.0, variation = 0.5) -> None:
         self.from_file = True if from_file is not None else False 
+        self.from_uci = True if from_uci is not None else False 
 
-        if centers is None and from_file is None:
+        if centers is None and from_file is None and from_uci is None:
             centers = calc_default_centers(sample_dimensions, number_of_classes) if not cluster_position_randomness else calc_random_centers(sample_dimensions, number_of_classes, factor=closeness)
-        if vars is None and from_file is None:
+        if vars is None and from_file is None and from_uci is None:
             vars = calc_default_vars(sample_dimensions, number_of_classes) if not cluster_position_randomness else calc_random_vars(sample_dimensions, number_of_classes, factor=variation)
         
         self.info = {
             "path": from_file,
+            "uci": from_uci,
             "centers": centers,
             "vars": vars,
             "number_of_classes": number_of_classes,
@@ -50,6 +60,8 @@ class RawData:
     def __init__(self, config) -> None:
         if config.from_file:
             self.load_data(**config())
+        elif config.from_uci:
+            self.load_uci(**config())
         else:
             self.make_multidimensional_blobs(**config())
     
@@ -76,14 +88,39 @@ class RawData:
         with open(path, 'rb') as handle:
             self.data, self.labels = pickle.load(handle)
 
-if __name__ == "__main__":
-    # rdc = RawDataConfig(4, 5, 2)
-    rdc = RawDataConfig(from_file = "data\\data_01.pickle")
-    rd = RawData(rdc)
-    rd.save_data("data\\data_01.pickle")
+    def load_uci(self, uci, **kwargs):
+        repo = fetch_ucirepo(id=uci.value) 
+        data = repo.data.features
+        # self.data = np.array([[float(v) for v in d] for d in data])
+        self.data = self.clean_dataset(data)
+        labels = repo.data.targets.to_numpy()  
+        mappings = {v:k for k,v in enumerate(np.unique(labels))}
+        self.labels = np.array([mappings[l[0]] for l in labels])
 
-    visualise_hyperplane(rd, (0,1), "hola01.png", color_classes=True)
-    # visualise_hyperplane(rd, (0,2), "hola02.png")
-    # visualise_hyperplane(rd, (1,2), "hola12.png")
-    # visualise_hypercube(rd, (0,1,2), "hola3D.png")
+    def clean_dataset(self, df):
+        # Identify string columns for one-hot encoding
+        string_columns = df.select_dtypes(include=['object']).columns
+
+        # Apply one-hot encoding to string columns
+        df = pd.get_dummies(df, columns=string_columns)
+
+        # Convert all columns to float
+        df = df.astype(float)
+
+        # Convert the entire DataFrame to a NumPy array of float values
+        data_array = df.values
+
+        return data_array
+
+if __name__ == "__main__":
+    # rdc = RawDataConfig(3, 10, 4)
+    # rdc = RawDataConfig(from_file = "data\\data_01.pickle")
+    rdc = RawDataConfig(from_uci = UcimlDatatypes.IRIS)
+    rd = RawData(rdc)
+    # rd.save_data("data\\obesity.pickle")
+
+    vsl.visualise_hyperplane(rd, (0,1), "hola01.png", color_classes=True)
+    vsl.visualise_hyperplane(rd, (0,2), "hola02.png")
+    vsl.visualise_hyperplane(rd, (1,2), "hola12.png")
+    # vsl.visualise_hypercube(rd, (0,1,2), "hola3D.png")
     rd.save_data("data.pickle")

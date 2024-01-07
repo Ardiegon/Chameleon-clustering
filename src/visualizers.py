@@ -7,10 +7,10 @@ import imageio
 
 import src.generate_data as gd
 
-def visualise_hyperplane(raw_data, vis_dimension, path, color_classes = True, other_labels = []):
-    if isinstance(raw_data, gd.RawData):
+def visualise_hyperplane(raw_data, vis_dimension, path, color_classes = True):
+    try:
         X, y = (raw_data.data, raw_data.labels)
-    else:
+    except:
         X, y = np.array(raw_data[0]), np.array(raw_data[1])  
     assert len(vis_dimension)==2
     assert all(vd < len(X[0]) for vd in vis_dimension)

@@ -7,3 +7,5 @@ metis
 networkx
 partition-igraph
 pygraphviz
+ucimlrepo
+pandas
