@@ -3,4 +3,5 @@
 !data/test*.pickle
 !*intro.png
 !*outro.png
+!*cm.png
 __pycache__
