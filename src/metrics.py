@@ -37,7 +37,7 @@ def relative_closeness(graph, cid1, cid2):
     return rc_all / ((ic_1 / (ic_1 + ic_2) * rc_1) + (ic_2 / (ic_1 + ic_2) * rc_2))
 
 def cost_func(graph, cid1, cid2, alpha):
-    return relative_closeness(graph, cid1, cid2)**alpha * relative_interconnectivity(graph, cid1, cid2)
+    return np.power(relative_closeness(graph, cid1, cid2),alpha) * relative_interconnectivity(graph, cid1, cid2)
 
 if __name__ == "__main__":
     rd = RawData(RawDataConfig(from_file = "data/data_01.pickle"))
